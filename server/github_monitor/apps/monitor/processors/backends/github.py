@@ -1,40 +1,24 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import os
 import re
 import time
 import logging
 import dateutil.parser
-from urllib3.exceptions import ReadTimeoutError
-from django.utils import timezone
-from django.db import connection, close_old_connections
-from django.template.loader import render_to_string
-from django.core.mail import EmailMessage
+from github_monitor.apps.monitor.processors.factory import AbstractTaskProcessor
 from django.conf import settings
-from threading import Thread
+from django.utils import timezone
 from github import Github
 from github import GithubException
 from github.GithubException import UnknownObjectException
-# 调试时去掉下面的注释、命令行执行 PYTHONPATH=. venv/bin/python github_monitor/apps/monitor/processors.py
-# import django, os
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "github_monitor.settings")
-# django.setup()
-from github_monitor.apps.monitor.models.task import Task
-from github_monitor.apps.monitor.models.leakage import Leakage
+from urllib3.exceptions import ReadTimeoutError
+
+
 
 logger = logging.getLogger(__name__)
 RS = settings.RS
-# 默认搜索页数
 per_page = 50
 
 
-class TaskProcessor(object):
-
-    def __init__(self, task):
-        self.task = task
-        self.email_results = []
-        self.thread_pool = list()
-
+class TaskProcessor(AbstractTaskProcessor):
     @staticmethod
     def get_available_token():
         for key in RS.keys():
@@ -59,7 +43,7 @@ class TaskProcessor(object):
         RS.hset('token:%s' % token, 'reset', reset_time)
         return self._new_session()
 
-    def search_by_keyword_thread(self, keyword):
+    def search(self, keyword):
         session, _token = self._new_session()
         while True:
             try:
@@ -96,10 +80,8 @@ class TaskProcessor(object):
             except ReadTimeoutError:
                 continue
             self.process_pages(page_content, keyword)
-        close_old_connections()
-
     def process_pages(self, _contents, _keyword):
-
+        from github_monitor.apps.monitor.models.leakage import Leakage
         def get_data(github_file):
             if not github_file.last_modified:
                 try:
@@ -128,13 +110,11 @@ class TaskProcessor(object):
         # 根据任务匹配模式 进行相应的操作
         def check_match_mode(_fragment):
             # 精确匹配：如果关键词不在内容中,则跳过
-            if self.task.match_method == 1:
-                if _keyword not in _fragment:
+            if self.task.match_method == 1 and _keyword not in _fragment:
                     return True
 
             # 单词匹配
-            if self.task.match_method == 2:
-                if re.search(r'\b' + _keyword + r'\b', _fragment) is None:
+            if self.task.match_method == 2 and re.search(r'\b' + _keyword + r'\b', _fragment) is None:
                     return True
 
         for _file in _contents:
@@ -175,57 +155,3 @@ class TaskProcessor(object):
 
                 self.email_results.append(data)
                 Leakage(**data).save()
-
-    def render_email_html(self):
-        template_file = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 'templates', 'mail.html'
-        )
-        return render_to_string(template_file, {
-            'results': self.email_results,
-            'task': self.task
-        })
-
-    def send_email(self):
-        if self.task.mail and self.email_results:
-            email = EmailMessage(
-                '[GITHUB安全监控]发现新的泄露信息',
-                self.render_email_html(),
-                settings.FROM_EMAIL,
-                self.task.mail.split(';'),
-            )
-            email.content_subtype = "html"
-            email.send()
-
-    def process(self):
-        while True:
-            connection.close()
-            self.email_results = []
-            self.task.refresh_from_db()
-            self.task.status = 1
-            self.task.start_time = timezone.now()
-            self.task.finished_time = None
-            self.task.save()
-            keyword_list = self.task.keywords.split('\n')
-            for keyword in keyword_list:
-                _thread = Thread(target=self.search_by_keyword_thread, args=(keyword, ))
-                _thread.start()
-                self.thread_pool.append(_thread)
-            for th in self.thread_pool:
-                th.join()
-            connection.close()
-            self.task.status = 2
-            self.task.finished_time = timezone.now()
-            self.task.save()
-            try:
-                self.send_email()
-            except Exception as e:
-                logger.exception(e)
-                pass
-            # sleep一个周期的时间
-            time.sleep(60 * self.task.interval)
-
-
-if __name__ == '__main__':
-    t = Task.objects.get(id=5)
-    cp = TaskProcessor(t)
-    cp.process()

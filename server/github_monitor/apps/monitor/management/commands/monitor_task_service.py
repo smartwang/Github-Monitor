@@ -7,7 +7,7 @@ import sys
 from multiprocessing import Process
 from github_monitor.apps.monitor.models.token import Token
 from github_monitor.apps.monitor.models.task import Task
-from github_monitor.apps.monitor.processors import TaskProcessor
+from github_monitor.apps.monitor.processors.factory import TaskProcessor, AbstractTaskProcessor
 if sys.version >= '3.8':
     import multiprocessing as mp
     mp.set_start_method('fork')
@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        def _process(_processor):
+        def _process(_processor: AbstractTaskProcessor):
             _processor.process()
 
         while True:

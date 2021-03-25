@@ -18,4 +18,6 @@ const taskStatus = ['等待中', '运行中', '完成'];
 
 const matchMethod = ['模糊匹配', '精确匹配', '单词匹配'];
 
-export { API_HOST, leakageStatus, leakageTagColor, taskStatus, matchMethod };
+const processors = ['github'];
+
+export { API_HOST, leakageStatus, leakageTagColor, taskStatus, matchMethod, processors };

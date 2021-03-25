@@ -271,6 +271,7 @@ export default {
   'task.modal.create-task': '创建任务',
   'task.modal.field.task-name': '任务名称',
   'task.modal.field.task-name.required': '任务名称不可为空!',
+  'task.modal.field.task-processor': '任务处理器',
   'task.modal.field.keyword': '关键词',
   'task.modal.field.keyword.hint': '不可为空，支持多个关键词使用换行分隔',
   'task.modal.field.match-method': '匹配模式',

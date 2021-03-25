@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, Form, Input, InputNumber, Select, Tooltip, Icon } from 'antd';
 import { formatMessage } from 'umi/locale';
 import { matchMethod as allMatchMethod } from '@/constants';
-
+import { processors as allProcessor } from '@/constants';
 const FormItem = Form.Item;
 const { TextArea } = Input;
 const { Option } = Select;
@@ -49,6 +49,7 @@ class TaskModal extends React.Component {
     const { children, form, data = {} } = this.props;
     const {
       name = '',
+      processor = '',
       keywords = '',
       match_method: matchMethod = '',
       ignore_org: ignoreOrg = '',
@@ -90,6 +91,25 @@ class TaskModal extends React.Component {
                   },
                 ],
               })(<Input />)}
+            </FormItem>
+            <FormItem
+              {...formItemLayout}
+              label={formatMessage({ id: 'task.modal.field.task-processor' })}
+            >
+              {getFieldDecorator('processor', {
+                initialValue: processor,
+                rules: [
+                  {
+                    required: true
+                  },
+                ],
+              })(
+                <Select>
+                  {allProcessor.map((value, index) => (
+                    <Option key={`allProcessor${value}`} value={value}>{value}</Option>
+                  ))}
+                </Select>
+              )}
             </FormItem>
             <FormItem
               {...formItemLayout}

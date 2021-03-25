@@ -1,4 +1,22 @@
+import os
 from django.db import models
+from importlib import import_module
+from github_monitor.apps.monitor.processors.factory import AbstractTaskProcessor
+
+
+def get_processor_choices() -> list:
+    choices = []
+    module = import_module(f"github_monitor.apps.monitor.processors.backends")
+    for root, dirs, files in os.walk(module.__path__[0]):
+        if root == module.__path__[0]:
+            for file in files:
+                if file.endswith(".py"):
+                    processor_name = file.rsplit('.')[0]
+                    m = import_module(f"github_monitor.apps.monitor.processors.backends.{processor_name}")
+                    if getattr(m, 'TaskProcessor', None) and issubclass(getattr(m, 'TaskProcessor'), AbstractTaskProcessor):
+                        choices.append((processor_name, m.TaskProcessor.name()))
+            break
+    return choices
 
 
 class Task(models.Model):
@@ -26,3 +44,4 @@ class Task(models.Model):
     start_time = models.DateTimeField(null=True)
     finished_time = models.DateTimeField(null=True)
     mail = models.TextField(null=True, default='', verbose_name='通知邮箱列表')
+    processor = models.CharField('processor', max_length=16, choices=get_processor_choices(), default='github')

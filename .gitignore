@@ -10,3 +10,4 @@ data/
 db.sqlite3
 github.db
 .env
+.vscode

@@ -21,6 +21,10 @@ class TaskLists extends React.Component {
         dataIndex: 'id',
       },
       {
+        title: 'processor',
+        dataIndex: 'processor',
+      },
+      {
         title: formatMessage({ id: 'task.table.columns.task-name' }),
         dataIndex: 'name',
         render: (record, obj) => <Link to={`/list/?taskId=${obj.id}`}>{record}</Link>,

@@ -15,6 +15,9 @@ class TaskSerializer(serializers.ModelSerializer):
     mail = serializers.CharField(
         required=False, allow_null=True, allow_blank=True, label='通知邮箱', help_text='多个邮箱分号分隔'
     )
+    processor = serializers.CharField(
+        required=True, allow_null=False, allow_blank=False, label='processor', help_text='choose one processor'
+    )    
     start_time = serializers.SerializerMethodField()
     finished_time = serializers.SerializerMethodField()
 
