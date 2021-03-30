@@ -18,6 +18,14 @@ def get_processor_choices() -> list:
             break
     return choices
 
+class Processor(models.Model):
+    name = models.CharField('name', max_length=20, blank=False, unique=True)
+    backend =  models.CharField('backend', max_length=16, choices=get_processor_choices(), default='github')
+    config = models.TextField('config', blank=True, default='')
+
+    def __str__(self) -> str:
+        return self.name
+
 
 class Task(models.Model):
     statusItemChoices = (
@@ -44,4 +52,4 @@ class Task(models.Model):
     start_time = models.DateTimeField(null=True)
     finished_time = models.DateTimeField(null=True)
     mail = models.TextField(null=True, default='', verbose_name='通知邮箱列表')
-    processor = models.CharField('processor', max_length=16, choices=get_processor_choices(), default='github')
+    processor = models.ForeignKey(Processor, on_delete=models.CASCADE, verbose_name='processor', null=True)

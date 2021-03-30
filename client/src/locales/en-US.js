@@ -276,6 +276,7 @@ export default {
   'task.modal.create-task': 'Create Task',
   'task.modal.field.task-name': 'Task name',
   'task.modal.field.task-name.required': 'The task name cannot be empty!',
+  'task.modal.field.task-processor': 'Task processor',
   'task.modal.field.keyword': 'Keywords',
   'task.modal.field.keyword.hint':
     'Cannot be empty, supports multiple keywords separated by line breaks',

@@ -83,7 +83,7 @@ class AbstractTaskProcessor(ABC):
 class TaskProcessor(type):
     def __new__(mcs, task, *args, **kwargs) -> Optional[AbstractTaskProcessor]:
         try:
-            module = import_module(f"github_monitor.apps.monitor.processors.backends.{task.processor}")
+            module = import_module(f"github_monitor.apps.monitor.processors.backends.{task.processor.backend}")
             return module.TaskProcessor(task)
         except ImportError:
             return None
